@@ -33,8 +33,6 @@ const Home = (): JSX.Element => {
     return sumAmount;
   }, {} as CartItemsAmount)
 
-  console.log(cart);
-
   useEffect(() => {
     async function loadProducts() {
       api.get('/products').then((response) => setProducts(response.data))

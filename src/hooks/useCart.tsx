@@ -40,37 +40,33 @@ export function CartProvider({ children }: CartProviderProps): JSX.Element {
       const product = productsResponse.data;
       const existingProductIndex = cart.findIndex((product) => product.id === productId)  
 
-      const stockResponse = await api.get(`/stock/`)
-      const stocks: Stock[] = stockResponse.data;
-      const stockProduct = stocks.find((product) => product.id === productId)
+      const stockResponse = await api.get(`/stock/${productId}`)
+      const stockProduct: Stock = stockResponse.data;
+
+      console.log('stockProduct >>>', stockProduct);
 
       if(existingProductIndex !== -1) {
 
         if(stockProduct && cart[existingProductIndex].amount + 1 > stockProduct.amount) {
           toast.error('Quantidade solicitada fora de estoque');
-          return;
+        } else {
+          const newCart = [
+            ...cart
+          ];
+  
+          newCart.splice(existingProductIndex, 1, {...product, amount: cart[existingProductIndex].amount+1});
+  
+          setCart(newCart);
+          localStorage.setItem('@RocketShoes:cart', JSON.stringify(newCart))
         }
-
-        const newCart = [
-          ...cart,
-          {...product, amount: cart[existingProductIndex].amount+1 }
-        ];
-
-        newCart.splice(existingProductIndex, 1);
-
-        setCart(newCart);
-        localStorage.setItem('@RocketShoes:cart', JSON.stringify(newCart))
+        
       } else {
-          if(stockProduct && stockProduct.amount === 0) {
-            toast.error('Quantidade solicitada fora de estoque');
-            return;
-          }
 
           const newCart = [
             ...cart,
             {...product, amount: 1 }
           ]
-          
+
           setCart(newCart);
           localStorage.setItem('@RocketShoes:cart', JSON.stringify(newCart))
       }
@@ -86,12 +82,16 @@ export function CartProvider({ children }: CartProviderProps): JSX.Element {
       
       const existingProductIndex = cart.findIndex((product) => product.id === productId);
 
-      const newCart = [...cart];
+      if(existingProductIndex === -1) {
+        toast.error('Erro na remoção do produto');
+      } else {
+        const newCart = [...cart];
 
       newCart.splice(existingProductIndex, 1);
       
       setCart(newCart);
       localStorage.setItem('@RocketShoes:cart', JSON.stringify(newCart))
+      }
 
     } catch {
       toast.error('Erro na remoção do produto');
@@ -106,37 +106,38 @@ export function CartProvider({ children }: CartProviderProps): JSX.Element {
       const existingProduct = cart.find((product) => product.id === productId);
       const existingProductIndex = cart.findIndex((product) => product.id === productId);
 
-      const stockResponse = await api.get(`/stock/`)
-      const stocks: Stock[] = stockResponse.data;
-      const stockProduct = stocks.find((product) => product.id === productId)
+      const stockResponse = await api.get(`/stock/${productId}`);
+      const stockProduct: Stock = stockResponse.data;
 
       if(existingProduct) {
 
         const newCart = [
           ...cart
         ] 
-
         newCart.splice(existingProductIndex, 1, {...existingProduct, amount: amount});
 
         if(amount > existingProduct.amount) {
+          console.log(amount, stockProduct!.amount);
           if(stockProduct && amount <= stockProduct.amount) {
+
             setCart(newCart);
+            localStorage.setItem('@RocketShoes:cart', JSON.stringify(newCart))
           } else {
             toast.error('Quantidade solicitada fora de estoque');
           }
         } else {
           if(stockProduct && amount > 0) {
             setCart(newCart);
+            localStorage.setItem('@RocketShoes:cart', JSON.stringify(newCart))
           } else {
             toast.error('Quantidade solicitada fora de estoque');
           }
         }
-        localStorage.setItem('@RocketShoes:cart', JSON.stringify(newCart))
       }
 
 
     } catch {
-      toast.error('Erro na adição do produto');
+      toast.error('Erro na alteração de quantidade do produto');
     }
   };
 
